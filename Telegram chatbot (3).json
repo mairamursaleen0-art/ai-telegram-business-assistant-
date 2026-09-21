@@ -1,0 +1,502 @@
+{
+  "name": "Telegram chatbot",
+  "nodes": [
+    {
+      "parameters": {
+        "toolDescription": "Use this tool whenever the user asks about the company, services, pricing, technologies, portfolio, support, consultation, business information, or FAQs. Always search this knowledge base before answering. Never answer from memory if the information should come from the knowledge base.",
+        "method": "POST",
+        "url": "https://prod-1-data.ke.pinecone.io/assistant/chat/n8n2",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Api-Key",
+              "value": "pcsk_5EkeUF_Dn2vTfmQZdQKwT7gFXDy1AJzRokNrv9TtDxwDS4Hm6Dm4hCNXcGxGfM46GKfCac"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"{{ $json.message.text }}\"\n    }\n  ],\n  \"stream\": false,\n  \"model\": \"gpt-4o\"\n} ",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        -3664,
+        240
+      ],
+      "id": "ffe01ca4-35a9-4acf-b776-bea16d846b10",
+      "name": "Pinecone"
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -4192,
+        -64
+      ],
+      "id": "4298c7a3-0b24-427b-a2ae-f01d846cbca9",
+      "name": "Telegram Trigger",
+      "webhookId": "b01b38a8-bda6-45d2-8c45-088ed74e1df7",
+      "credentials": {
+        "telegramApi": {
+          "id": "7tNtkvDf3sKbz6Qj",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message.text }}",
+        "options": {
+          "systemMessage": "You are an AI Business Assistant.\n\nYour first priority is to answer every user question using the information retrieved from the Pinecone knowledge base.\n\nRules:\n\n1. Always search the Pinecone knowledge base first before answering.\n2. If relevant information is found in Pinecone, answer ONLY using that information.\n3. Do not add assumptions, opinions, or external knowledge when the answer exists in the knowledge base.\n4. If the retrieved information is incomplete, summarize only the available information without inventing missing details.\n5. If no relevant information is found in the knowledge base, respond with:\n   \"I'm sorry, I couldn't find that information in my knowledge base. Please contact our support team for further assistance.\"\n6. Keep responses professional, concise, and easy to understand.\n7. If the user greets you (e.g., \"Hi\", \"Hello\"), respond politely before assisting.\n8. Never mention Pinecone, vectors, embeddings, or internal system details to the user."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -3968,
+        -64
+      ],
+      "id": "8f601730-fa2a-4ba3-a4dd-d894df2f1fbf",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -4096,
+        256
+      ],
+      "id": "19818e9a-9bc2-4c00-a209-d98a56f16631",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "tDW7CwBxQLZhJhfO",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $workflow.id }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        -3872,
+        240
+      ],
+      "id": "0e8bb6aa-910d-4a09-a5a7-5c62476f55a4",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "text": "={{ $json.output }}",
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"full_name\": \"John Smith\",\n  \"email\": \"john@gmail.com\",\n  \"company\": \"ABC Ltd\",\n  \"industry\": \"Healthcare\",\n  \"budget\": \"$1000\",\n  \"timeline\": \"2 weeks\",\n  \"requirements\": \"Need AI chatbot\"\n}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "typeVersion": 1.2,
+      "position": [
+        -3600,
+        -64
+      ],
+      "id": "38356669-c77f-4910-a0a8-48595456b76d",
+      "name": "Information Extractor"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "c340b629-5f17-47c3-8a7e-446f8c3e71ee",
+              "leftValue": "={{ $json.output['Full Name'] }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "e4191bfb-40b1-4f25-97c5-7d7f65e38f31",
+              "leftValue": "={{ $json.output.Email }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -3392,
+        160
+      ],
+      "id": "d07cdac5-0501-4742-9380-f2b4afd8b4fd",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1RaeLI9rVU3Cmcl9eMbtWgZBt9rEmJLIl1f7HzHoet8o",
+          "mode": "list",
+          "cachedResultName": "New Lead",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1RaeLI9rVU3Cmcl9eMbtWgZBt9rEmJLIl1f7HzHoet8o/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1RaeLI9rVU3Cmcl9eMbtWgZBt9rEmJLIl1f7HzHoet8o/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ $now }}",
+            "Name": "={{ $('Information Extractor').item.json.output['Full Name'] }}",
+            "Email": "={{ $('Information Extractor').item.json.output.Email }}",
+            "Company": "={{ $('Information Extractor').item.json.output['Company Name'] }}",
+            "Requirements": "={{ $('Information Extractor').item.json.output['Automation Requirements'] }}",
+            "Timeline": "={{ $('Information Extractor').item.json.output['Preferred Meeting Date'] }}",
+            "Budget": "={{ $('Information Extractor').item.json.output.Budget }}",
+            "Industry": "={{ $('Information Extractor').item.json.output['Business Type'] }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "displayName": "Email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Company",
+              "displayName": "Company",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Industry",
+              "displayName": "Industry",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Requirements",
+              "displayName": "Requirements",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Budget",
+              "displayName": "Budget",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Timeline",
+              "displayName": "Timeline",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -3168,
+        -16
+      ],
+      "id": "2209a499-a5d0-4842-97fa-76f7a2d09628",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Tp8cbAjt9GhBe81y",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "mairamursaleen0@gmail.com",
+        "subject": "New Lead",
+        "emailType": "text",
+        "message": "=Name:{{ $json.Name }}\nEmail:{{ $json.Email }}\nBudget:{{ $json.Budget }}\nRequirement:{{ $json.Requirements }}\nComapny:{{ $json.Company }}\nDate: {{ $json.Timeline }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -2976,
+        -16
+      ],
+      "id": "ef36d469-9c6e-47da-996e-2d657d7f6aef",
+      "name": "Send a message",
+      "webhookId": "434f9603-4619-4d56-adf6-78d995cc956e",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "JWUXkm10RGD1oy28",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $('AI Agent').item.json.output }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -2736,
+        -16
+      ],
+      "id": "a8cf026d-722a-4e0b-be4c-c554f05af342",
+      "name": "Send a text message",
+      "webhookId": "533f0644-7ac9-4ab2-aa27-2e7ebac6b048",
+      "credentials": {
+        "telegramApi": {
+          "id": "7tNtkvDf3sKbz6Qj",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $('AI Agent').item.json.output }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -3136,
+        304
+      ],
+      "id": "09efd077-e82a-4e4d-8dc5-db4f3b94e424",
+      "name": "Send a text message1",
+      "webhookId": "132c68fd-5a82-41aa-9177-ccb04bcb082b",
+      "credentials": {
+        "telegramApi": {
+          "id": "7tNtkvDf3sKbz6Qj",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Pinecone": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Information Extractor",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Information Extractor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Information Extractor": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a text message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "c50bba6b-75fa-4f8c-b821-9a5b39c2e507",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7779f852dc51c35c51c1b61f6f29411a6cd0c2672b0b73dd2646ed9d495af908"
+  },
+  "nodeGroups": [],
+  "id": "Up8sEGcTIU52ysKt",
+  "tags": []
+}
